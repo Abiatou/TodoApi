@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Models;
@@ -6,6 +7,7 @@ namespace TodoApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize] // Tous les utilisateurs connectés peuvent accéder
 public class TodoItemsController : ControllerBase
 {
     private readonly TodoContext _context;
@@ -15,7 +17,7 @@ public class TodoItemsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/TodoItems
+    // GET: api/TodoItems - Tous les utilisateurs connectés
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TodoItemDTO>>> GetTodoItems()
     {
@@ -24,8 +26,7 @@ public class TodoItemsController : ControllerBase
             .ToListAsync();
     }
 
-    // GET: api/TodoItems/5
-    // <snippet_GetByID>
+    // GET: api/TodoItems/5 - Tous les utilisateurs connectés
     [HttpGet("{id}")]
     public async Task<ActionResult<TodoItemDTO>> GetTodoItem(long id)
     {
@@ -38,12 +39,10 @@ public class TodoItemsController : ControllerBase
 
         return ItemToDTO(todoItem);
     }
-    // </snippet_GetByID>
 
-    // PUT: api/TodoItems/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    // <snippet_Update>
+    // PUT: api/TodoItems/5 - Admin uniquement
     [HttpPut("{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> PutTodoItem(long id, TodoItemDTO todoDTO)
     {
         if (id != todoDTO.Id)
@@ -71,12 +70,10 @@ public class TodoItemsController : ControllerBase
 
         return NoContent();
     }
-    // </snippet_Update>
 
-    // POST: api/TodoItems
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    // <snippet_Create>
+    // POST: api/TodoItems - Admin uniquement
     [HttpPost]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<TodoItemDTO>> PostTodoItem(TodoItemDTO todoDTO)
     {
         var todoItem = new TodoItem
@@ -93,10 +90,10 @@ public class TodoItemsController : ControllerBase
             new { id = todoItem.Id },
             ItemToDTO(todoItem));
     }
-    // </snippet_Create>
 
-    // DELETE: api/TodoItems/5
+    // DELETE: api/TodoItems/5 - Admin uniquement
     [HttpDelete("{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> DeleteTodoItem(long id)
     {
         var todoItem = await _context.TodoItems.FindAsync(id);
@@ -117,10 +114,10 @@ public class TodoItemsController : ControllerBase
     }
 
     private static TodoItemDTO ItemToDTO(TodoItem todoItem) =>
-       new TodoItemDTO
-       {
-           Id = todoItem.Id,
-           Name = todoItem.Name,
-           IsComplete = todoItem.IsComplete
-       };
+        new TodoItemDTO
+        {
+            Id = todoItem.Id,
+            Name = todoItem.Name,
+            IsComplete = todoItem.IsComplete
+        };
 }
